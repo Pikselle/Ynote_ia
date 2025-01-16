@@ -1,13 +1,17 @@
-from pymongo import MongoClient
+from pymongo.mongo_client import MongoClient
 
-client = MongoClient()
+# user admin mdp admin lol
+uri = "mongodb+srv://admin:admin@clusterchords.5kcax.mongodb.net/?retryWrites=true&w=majority&appName=ClusterChords"
 
-#Connexion a remplacer une fois la bdd hébergée
-client = MongoClient("mongodb://localhost:27017/")
+client = MongoClient(uri)
 
-#db
+# Vérif de la connexion
+try:
+    client.admin.command('ping')
+    print("Pinged your deployment. You successfully connected to MongoDB!")
+except Exception as e:
+    print(e)
+
 database = client["database"]
-
-# 1 collection pour les url, 1 pour les features
 url_collection = database["url_collection"]
 features_collection = database["features_collection"]
