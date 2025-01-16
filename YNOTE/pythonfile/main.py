@@ -65,4 +65,3 @@ def extract_tempo():
 #bpm = extract_tempo()
 #print(chroma)
 #print(bpm)
-store_url()

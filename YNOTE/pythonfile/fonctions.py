@@ -50,13 +50,15 @@ def extract_chromas(y,sr,fichier_audio):
     chroma = np.mean(librosa.feature.chroma_stft(S=stft, sr=sample_rate).T,axis=0)
 
     #print(chroma)
-    return chroma
+    return chroma.tolist()
 # Partie  MFCC
 
 def extract_MFCC(y,sr):
     # Calcul des MFCC
     mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20)
-    return y, sr, mfcc
+    #Normalisation
+    mfcc_normalized = (mfcc - np.mean(mfcc, axis=1, keepdims=True)) / np.std(mfcc, axis=1, keepdims=True)
+    return mfcc_normalized.tolist()
 
 #Partie BPM
 def extract_tempo(y,sr):
@@ -68,19 +70,24 @@ def extract_tempo(y,sr):
     return bpm
 def get_features(chemin_fichier):
     y, sr = librosa.load(chemin_fichier)
-    chroma = extract_chromas(y,sr,chemin_fichier)
-    bpm = extract_tempo(y,sr)
-    return chroma,bpm
+    y_trimmed, _ = librosa.effects.trim(y)
+    chroma = extract_chromas(y_trimmed,sr,chemin_fichier)
+    bpm = extract_tempo(y_trimmed,sr)
+    mfcc=extract_MFCC(y_trimmed,sr)
+    return chroma,bpm,mfcc
 
 
 def analyse_musique():
+    #Reinit la base d'url et la remplie
+    store_url()
     #Récupérer tout les url de musiques
-    cursor = url_collection  # choosing the collection you need
+    cursor = url_collection
     for document in cursor.find({}, {"id": 1, "url": 1}):
         url = document['url']
         id  = document['id']
-        chroma,bpm = get_features(url)
-        print(url,chroma,bpm)
+        chroma,bpm,mfcc = get_features(url)
+        features_collection.insert_one({"id": id, "bpm":bpm,"chroma": chroma,"mfcc": mfcc })
+        #print(url,chroma,bpm)
     #---------------------
 
 analyse_musique()

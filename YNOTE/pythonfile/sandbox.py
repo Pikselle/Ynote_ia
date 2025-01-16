@@ -12,7 +12,8 @@ import librosa
 import numpy as np
 import soundfile as sf
 import librosa.display
-from main import extract_chromas, extract_tempo
+
+#from main import extract_chromas, extract_tempo
 #---------------------------------------------
 # Test de copie pour vérifier que les url fonctionen
 #dst = "C:\\Users\\Theo\\PycharmProjects\\YNote\\Ynote_ia\\YNOTE\\pythonfile\\Bobby McFerrin - Dont Worry Be Happy (Official Music Video).mp3"
@@ -29,13 +30,11 @@ from main import extract_chromas, extract_tempo
 
 #Analyse en masse des musiques
 
-cursor = url_collection  # choosing the collection you need
-for document in cursor.find({}, {"id": 1, "url": 1}):
+cursor = features_collection  # choosing the collection you need
+for document in cursor.find({}):
     print(document)
+
 
 #chroma_test,bpm_test = analyse_musique()
 #print(chroma_test)
 #print(bpm_test)
-
-
-
