@@ -67,8 +67,8 @@ def extract_tempo():
 
     return bpm
 
-chroma = extract_chromas()
+#chroma = extract_chromas()
 #y, sr, mfcc = extract_MFCC()
-bpm = extract_tempo()
-print(chroma)
-print(bpm)
+#bpm = extract_tempo()
+#print(chroma)
+#print(bpm)
