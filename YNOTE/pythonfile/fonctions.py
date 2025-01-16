@@ -1,5 +1,4 @@
-#Automatiser les extraction et stocker les résultats
-
+import os
 from pydub import AudioSegment
 import matplotlib.pyplot as plt
 from scipy.io import wavfile
@@ -8,13 +7,21 @@ import librosa
 import numpy as np
 import soundfile as sf
 import librosa.display
-from fonctions import store_url
-#choisir le fichier de test
-fichier_audio= r"C:\Users\Theo\PycharmProjects\YNote\Ynote_ia\YNOTE\sample\Rick Astley - Never Gonna Give You Up (Official Music Video).mp3"
-y, sr = librosa.load(fichier_audio)
-# Partie des chromas features
+from bdd import url_collection,features_collection
 
-def extract_chromas():
+def store_url():
+    i=0
+    url_collection.delete_many({})#vide la collection
+    os.chdir("..")  # reculer d'un niveau dans la hierarchie
+    os.chdir("sample")  # passer dans le dossier des musique
+    repertoire = os.getcwd()# Pour avoir le repertoire dynamique pour le smusoiqur
+    liste_musiques = os.listdir()
+    liste_musiques = [repertoire + "\\" + element for element in liste_musiques]
+    for elements in liste_musiques:
+        url_collection.insert_one({'id' : i,'url': elements})
+        i+=1
+
+def extract_chromas(y,sr,fichier_audio):
 
 
     # Compute the Chroma Short-Time Fourier Transform (chroma_stft)
@@ -46,23 +53,34 @@ def extract_chromas():
     return chroma
 # Partie  MFCC
 
-def extract_MFCC():
+def extract_MFCC(y,sr):
     # Calcul des MFCC
     mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20)
     return y, sr, mfcc
 
 #Partie BPM
-def extract_tempo():
+def extract_tempo(y,sr):
 
     tempo, _ = librosa.beat.beat_track(y=y, sr=sr)
     if isinstance(tempo, (list, np.ndarray)):
         tempo = tempo[0]
     bpm = int(round(tempo))
     return bpm
+def get_features(chemin_fichier):
+    y, sr = librosa.load(chemin_fichier)
+    chroma = extract_chromas(y,sr,chemin_fichier)
+    bpm = extract_tempo(y,sr)
+    return chroma,bpm
 
-#chroma = extract_chromas()
-#y, sr, mfcc = extract_MFCC()
-#bpm = extract_tempo()
-#print(chroma)
-#print(bpm)
-store_url()
+
+def analyse_musique():
+    #Récupérer tout les url de musiques
+    cursor = url_collection  # choosing the collection you need
+    for document in cursor.find({}, {"id": 1, "url": 1}):
+        url = document['url']
+        id  = document['id']
+        chroma,bpm = get_features(url)
+        print(url,chroma,bpm)
+    #---------------------
+
+analyse_musique()
