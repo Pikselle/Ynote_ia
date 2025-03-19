@@ -15,3 +15,7 @@ except Exception as e:
 database = client["database"]
 url_collection = database["url_collection"]
 features_collection = database["features_collection"]
+
+
+
+print(url_collection)
