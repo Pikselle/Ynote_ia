@@ -60,7 +60,7 @@ def moyenne_voisins_groupes(arr, taille_groupe=3):
 # Partie MFCC avec réduction de taille
 def extract_MFCC(y, sr):
     # CHANGEMENT LIGNE DESSOUS HOP_LENGTH 2048
-    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13
+    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=5
                                 , n_fft=512, hop_length=2048)
     mfcc_normalized = (mfcc - np.mean(mfcc, axis=1, keepdims=True)) / np.std(mfcc, axis=1, keepdims=True)
 
