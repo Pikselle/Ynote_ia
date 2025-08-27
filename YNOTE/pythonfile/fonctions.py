@@ -8,6 +8,7 @@ import numpy as np
 import soundfile as sf
 import librosa.display
 from bdd import url_collection,features_collection
+from sklearn.decomposition import PCA
 
 def store_url():
     i=0
@@ -51,15 +52,18 @@ def extract_chromas(y,sr,fichier_audio):
 
     #print(chroma)
     return chroma.tolist()
+
+
 # Partie  MFCC
 
-def extract_MFCC(y,sr):
-    # Calcul des MFCC
-    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20)
-    #Normalisation
-    mfcc_normalized = (mfcc - np.mean(mfcc, axis=1, keepdims=True)) / np.std(mfcc, axis=1, keepdims=True)
-    return mfcc_normalized.tolist()
+def extract_MFCC(y, sr):
+    # Calcul des MFCC avec des paramètres minimisés
+    mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13, n_fft=1024, hop_length=512)
 
+    # Réduire à une seule colonne de MFCC pour un affichage simplifié (par exemple, juste la première frame)
+    mfcc_reduit = mfcc[:, 0:3].tolist()  # Ne garder qu'une seule frame (ou les premières)
+
+    return mfcc_reduit
 #Partie BPM
 def extract_tempo(y,sr):
 
@@ -68,13 +72,35 @@ def extract_tempo(y,sr):
         tempo = tempo[0]
     bpm = int(round(tempo))
     return bpm
+
+# Partie spectrogramme
+
+def extract_spectrogram(y, sr):
+    # Calcul du spectrogramme Mel
+    S = librosa.feature.melspectrogram(y=y, sr=sr, n_mels=32, fmax=2000, n_fft=256, hop_length=128)
+
+    # Vérification du spectrogramme initial
+    print("Spectrogramme avant PCA:", S.shape)
+
+    # Appliquer PCA pour réduire la dimensionnalité (réduction à 20 composantes principales)
+    pca = PCA(n_components=20)  # Réduction à 20 composantes principales
+    S_pca = pca.fit_transform(S.T)  # Appliquer PCA sur les frames temporelles (transpose pour que chaque frame soit un échantillon)
+
+    # Vérification après PCA
+    print("Spectrogramme après PCA:", S_pca.shape)
+
+    # Réduire à une seule valeur par composante en prenant la moyenne de chaque composante principale
+    S_pca_reduit = np.mean(S_pca, axis=0).tolist()  # Moyenne de chaque composante principale
+
+    return S_pca_reduit
 def get_features(chemin_fichier):
     y, sr = librosa.load(chemin_fichier)
     y_trimmed, _ = librosa.effects.trim(y)
     chroma = extract_chromas(y_trimmed,sr,chemin_fichier)
     bpm = extract_tempo(y_trimmed,sr)
     mfcc=extract_MFCC(y_trimmed,sr)
-    return chroma,bpm,mfcc
+    spectrogramme = extract_spectrogram(y_trimmed,sr)
+    return chroma,bpm,spectrogramme,mfcc
 
 
 def analyse_musique():
@@ -85,9 +111,16 @@ def analyse_musique():
     for document in cursor.find({}, {"id": 1, "url": 1}):
         url = document['url']
         id  = document['id']
-        chroma,bpm,mfcc = get_features(url)
-        features_collection.insert_one({"id": id, "bpm":bpm,"chroma": chroma,"mfcc": mfcc })
-        #print(url,chroma,bpm)
-    #---------------------
+        chroma,bpm,spectro,mfcc = get_features(url)
+        data = {
+            "chroma": chroma,
+            "bpm": bpm,
+            "spectro": spectro,
+            "mfcc": mfcc
+        }
+        features_collection.insert_one(data)
 
 analyse_musique()
+cursor2 = features_collection  # choosing the collection you need
+for document in cursor2.find():
+    print(document)
